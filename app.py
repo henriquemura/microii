@@ -96,7 +96,7 @@ with col_grafico:
 
 st.info("""
 **Insight Econômico:** 
-Como $\Delta HHI = 2 x S_1 x 0{,}5 = S_1$, a variação do HHI em cada aquisição de $0{,}5\%$ é numericamente igual ao market share que o adquirente já acumulou. 
+Como $\Delta HHI = 2 . S_1 . 0{,}5 = S_1$, a variação do HHI em cada aquisição de $0{,}5\%$ é numericamente igual ao market share que o adquirente já acumulou. 
 Mesmo na **última aquisição** (quando o agente já detém $99{,}5\%$ e compra o último $0{,}5\%$), a variação é de exatos **$99{,}5$ pontos**, ficando abaixo da linha de corte de $100$ pontos do CADE. Isso prova a necessidade de flexibilização e análise comportamental em mercados fragmentados.
 """)
 
