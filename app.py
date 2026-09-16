@@ -3,12 +3,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Configuração da página
-st.set_page_config(page_title="Simulação HHI - Loophole do CADE", layout="wide")
+st.set_page_config(page_title="Simulação HHI", layout="wide")
 
-st.title("📊 Simulação Interativa: O Paradoxo da Concentração Gradual (Loophole do HHI)")
+st.title("📊 Simulação Interativa: O Paradoxo da Concentração Gradual")
 st.markdown("""
 Esta aplicação simula o mercado hipotético com **200 empresas**, cada uma com **0,5% de participação de mercado**. 
-O agente adquire as empresas **uma a uma** de forma sequencial. O objetivo é demonstrar como aquisições fracionadas mantêm a variação do HHI ($\Delta \text{HHI}$) abaixo do limiar regulatório de **100 pontos**, permitindo a formação de um monopólio sem gatilhos automáticos de alerta.
+O agente adquire as empresas **uma a uma** de forma sequencial. O objetivo é demonstrar como aquisições fracionadas mantêm a variação do HHI ($\Delta\text{HHI}$) abaixo do limiar regulatório de **100 pontos**, permitindo a formação de um monopólio sem gatilhos automáticos de alerta.
 """)
 
 # Inicializar o estado da sessão para o número de empresas adquiridas (k)
@@ -59,7 +59,7 @@ with col_controles:
     st.markdown("---")
     st.markdown(f"### Status da Transação #{k}")
     st.metric(label="Market Share da Adquirente (Antes)", value=f"{market_share_anterior:.1f}%")
-    st.metric(label="Variação do HHI ($\Delta \text{HHI} = 2 \cdot S_1 \cdot S_2$)", value=f"{delta_hhi:.2f} pontos")
+    st.metric(label="Variação do HHI ($\Delta\text{HHI} = 2 \cdot S_1 \cdot S_2$)", value=f"{delta_hhi:.2f} pontos")
     st.metric(label="HHI Total do Mercado", value=f"{hhi_total:.1f} pontos")
     
     if delta_hhi < 100:
@@ -68,7 +68,7 @@ with col_controles:
         st.error("⚠️ **Acima de 100 pontos:** Acima do limiar de notificação mandatória.")
 
 with col_grafico:
-    st.subheader("Trajetória do $\Delta \text{HHI}$ ao Longo das Aquisições")
+    st.subheader("Trajetória do $\Delta\text{HHI}$ ao Longo das Aquisições")
     
     # Gerar dados para o gráfico de todas as 199 etapas
     etapas = list(range(1, 200))
@@ -96,7 +96,7 @@ with col_grafico:
 
 st.info("""
 **Insight Econômico:** 
-Como $\Delta \text{HHI} = 2 \times S_1 \times 0{,}5 = S_1$, a variação do HHI em cada aquisição de $0{,}5\%$ é numericamente igual ao market share que o adquirente já acumulou. 
+Como $\Delta\text{HHI} = 2 \times S_1 \times 0{,}5 = S_1$, a variação do HHI em cada aquisição de $0{,}5\%$ é numericamente igual ao market share que o adquirente já acumulou. 
 Mesmo na **última aquisição** (quando o agente já detém $99{,}5\%$ e compra o último $0{,}5\%$), a variação é de exatos **$99{,}5$ pontos**, ficando abaixo da linha de corte de $100$ pontos do CADE. Isso prova a necessidade de flexibilização e análise comportamental em mercados fragmentados.
 """)
 
