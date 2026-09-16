@@ -8,7 +8,7 @@ st.set_page_config(page_title="Simulação HHI", layout="wide")
 st.title("📊 Simulação Interativa: O Paradoxo da Concentração Gradual")
 st.markdown("""
 Esta aplicação simula o mercado hipotético com **200 empresas**, cada uma com **0,5% de participação de mercado**. 
-O agente adquire as empresas **uma a uma** de forma sequencial. O objetivo é demonstrar como aquisições fracionadas mantêm a variação do HHI ($\Delta\text{HHI}$) abaixo do limiar regulatório de **100 pontos**, permitindo a formação de um monopólio sem gatilhos automáticos de alerta.
+O agente adquire as empresas **uma a uma** de forma sequencial. O objetivo é demonstrar como aquisições fracionadas mantêm a variação do HHI (r"$\Delta\text{HHI}$") abaixo do limiar regulatório de **100 pontos**, permitindo a formação de um monopólio sem gatilhos automáticos de alerta.
 """)
 
 # Inicializar o estado da sessão para o número de empresas adquiridas (k)
