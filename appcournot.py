@@ -2,91 +2,102 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Configuração da página
+# Configuração da página do Streamlit
 st.set_page_config(page_title="Simulador Cournot", layout="wide")
-
 st.title("Simulador do Modelo de Cournot")
-st.markdown("Baseado na planilha *Cournot* do arquivo **CartelDWL.xlsm**.")
-st.markdown("Este aplicativo calcula o Equilíbrio de Nash-Cournot não cooperativo para n firmas idênticas competindo em quantidade.")
 
-# Sidebar para Variáveis Exógenas
-st.sidebar.header("Variáveis Exógenas")
-st.sidebar.markdown("Demanda: $P = d_0 - d_1Q$")
-st.sidebar.markdown("Custo Marginal (MC): $s_0$")
-
-d0 = st.sidebar.number_input("Intercepto da Demanda (d0)", value=3300.0, step=100.0)
+# ==========================================
+# 1. ENTRADA DE VARIÁVEIS (SIDEBAR)
+# ==========================================
+st.sidebar.header("Modifique as Variáveis Aqui")
+d0 = st.sidebar.number_input("Intercepto da Demanda (d0 - P máximo)", value=3300.0, step=100.0)
 d1 = st.sidebar.number_input("Inclinação da Demanda (d1)", value=0.0005, format="%.5f", step=0.0001)
-s0 = st.sidebar.number_input("Custo Marginal (s0)", value=1000.0, step=100.0)
-n = st.sidebar.number_input("Número de firmas (n)", value=3, min_value=1, step=1)
+s0 = st.sidebar.number_input("Custo Marginal (s0 - MC)", value=1000.0, step=100.0)
+n = st.sidebar.number_input("Número de firmas a competir (n)", value=3, min_value=1, step=1)
 
-# Validação simples
+# ==========================================
+# 2. CÁLCULOS DO MODELO DE COURNOT
+# ==========================================
 if s0 >= d0:
-    st.error("O Custo Marginal (s0) deve ser menor que o intercepto da demanda (d0) para haver produção.")
-    st.stop()
+    st.error("Erro: O Custo Marginal (s0) deve ser menor que o intercepto da demanda (d0).")
+else:
+    # Quantidade individual por firma
+    q = (d0 - s0) / (d1 * (n + 1))
+    
+    # Quantidade total do mercado
+    Q = n * q
+    
+    # Preço de equilíbrio
+    P = d0 - d1 * Q
 
-# Cálculos Analíticos do Modelo de Cournot
-# Pela teoria de Cournot, a quantidade individual de cada firma (qi) é:
-q = (d0 - s0) / (d1 * (n + 1))
-# A quantidade total no mercado (Q) é n * q:
-Q = n * q
-# Preço de equilíbrio (P):
-P = d0 - d1 * Q
+    # Quantidade em concorrência perfeita (para calcular a perda de peso morto)
+    Q_pc = (d0 - s0) / d1
 
-# Cálculo para Concorrência Perfeita (P = MC) para medir a Perda de Peso Morto (DWL)
-Q_pc = (d0 - s0) / d1
+    # ==========================================
+    # 3. CÁLCULOS DE BEM-ESTAR (WELFARE)
+    # ==========================================
+    # Excedente do Consumidor (CS)
+    CS = 0.5 * (d0 - P) * Q
+    
+    # Excedente do Produtor individual e Total (PS)
+    PS_firm = (P - s0) * q
+    PS_total = PS_firm * n
+    
+    # Perda de Peso Morto (DWL)
+    DWL = 0.5 * (P - s0) * (Q_pc - Q)
 
-# Medidas de Bem-Estar (Welfare Surplus)
-# Excedente do Consumidor (CS)
-CS = 0.5 * (d0 - P) * Q
-# Excedente do Produtor individual (Lucro) e Total (PS)
-PS_firm = (P - s0) * q
-PS_total = PS_firm * n
-# Perda de Peso Morto (DWL)
-DWL = 0.5 * (P - s0) * (Q_pc - Q)
+    # ==========================================
+    # 4. EXIBIÇÃO DOS RESULTADOS (TEXTO)
+    # ==========================================
+    st.subheader("--- RESULTADOS DE COURNOT ---")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Preço (P)", f" {P:,.2f}")
+    col2.metric("Quantidade por Firma (q)", f"{q/1000:,.0f}k")
+    col3.metric("Quantidade Total (Q)", f"{Q/1000:,.0f}k")
 
-# Exibição dos Resultados
-st.header("Solução de Cournot (Equilíbrio)")
-col1, col2, col3 = st.columns(3)
-col1.metric("Preço (P)", f"kr {P:,.2f}")
-col2.metric("Quantidade por Firma (q)", f"{q:,.0f}")
-col3.metric("Quantidade Total (Q)", f"{Q:,.0f}")
+    st.subheader("--- ANÁLISE DE BEM-ESTAR ---")
+    col4, col5, col6 = st.columns(3)
+    col4.metric("Excedente do Consumidor (CS)", f" {CS/1000000:,.2f}M")
+    col5.metric("Excedente do Produtor Total (PS)", f" {PS_total/1000000:,.2f}M")
+    col6.metric("Perda de Peso Morto (DWL)", f" {DWL/1000000:,.2f}M")
 
-st.header("Análise de Bem-Estar (Welfare)")
-col4, col5, col6 = st.columns(3)
-col4.metric("Excedente do Consumidor (CS)", f"kr {CS:,.2f}")
-col5.metric("Excedente do Produtor Total (PS)", f"kr {PS_total:,.2f}")
-col6.metric("Perda de Peso Morto (DWL)", f"kr {DWL:,.2f}")
+    # ==========================================
+    # 5. GERAÇÃO DO GRÁFICO
+    # ==========================================
+    st.markdown("---")
+    
+    # Vetor de quantidades para desenhar a linha da demanda (em milhares)
+    q_plot_k = np.linspace(0, (Q_pc * 1.2)/1000, 500)
+    p_demand = d0 - d1 * (q_plot_k * 1000) # Use original d1 with scaled Q for plotting function
+    p_demand = np.maximum(p_demand, 0) # Evita preços negativos no gráfico
 
-st.markdown("---")
+    # Cria a figura para o Streamlit (usando subplots é mais seguro em ambientes web)
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # Linhas principais
+    ax.plot(q_plot_k, p_demand, label='Demanda (D)', color='blue')
+    ax.axhline(y=s0, color='red', linestyle='-', label='Custo Marginal (MC)')
+    
+    # Ponto de equilíbrio (em milhares)
+    ax.plot(Q/1000, P, marker='o', markersize=8, color='black', label=f'Equilíbrio Cournot (Q={Q/1000:,.0f}k, P={P:,.2f})')
+    
+    # Linhas tracejadas para mostrar as coordenadas do ponto (em milhares)
+    ax.vlines(x=Q/1000, ymin=0, ymax=P, color='gray', linestyle='--')
+    ax.hlines(y=P, xmin=0, xmax=Q/1000, color='gray', linestyle='--')
 
-# Gráfico Interativo
-st.header("Representação Gráfica")
+    # Área de Perda de Peso Morto (DWL) (em milhares)
+    dwl_x_k = [val / 1000 for val in [Q, Q_pc, Q, Q]] # Scale x-coordinates for DWL
+    dwl_y = [P, s0, s0, P]
+    ax.fill(dwl_x_k, dwl_y, color='purple', alpha=0.3, label='Perda de Peso Morto (DWL)')
 
-# Gerando pontos para as curvas
-q_plot = np.linspace(0, Q_pc * 1.2, 500)
-p_demand = d0 - d1 * q_plot
-# O preço não pode ser negativo no gráfico
-p_demand = np.maximum(p_demand, 0)
-
-fig, ax = plt.subplots(figsize=(10, 6))
-
-# Plot da Demanda
-ax.plot(q_plot, p_demand, label='Demanda (D)', color='blue')
-# Plot do Custo Marginal
-ax.axhline(y=s0, color='red', linestyle='-', label='Custo Marginal (MC)')
-
-# Ponto de Equilíbrio Cournot
-ax.plot(Q, P, marker='o', markersize=8, color='black', label=f'Equilíbrio Cournot (Q={Q:,.0f}, P={P:,.2f})')
-ax.vlines(x=Q, ymin=0, ymax=P, color='gray', linestyle='--')
-ax.hlines(y=P, xmin=0, xmax=Q, color='gray', linestyle='--')
-
-# Configurações do Gráfico
-ax.set_title("Gráfico de Demanda e Custo Marginal", fontsize=14)
-ax.set_xlabel("Quantidade (Q)")
-ax.set_ylabel("Preço (P)")
-ax.set_ylim(0, d0 * 1.1)
-ax.set_xlim(0, Q_pc * 1.2)
-ax.legend()
-ax.grid(True, alpha=0.3)
-
-st.pyplot(fig)
+    # Configurações visuais do gráfico
+    ax.set_title("Gráfico de Demanda e Custo Marginal (Modelo de Cournot)")
+    ax.set_xlabel("Quantidade Total (Q, em milhares)")
+    ax.set_ylabel("Preço (P)")
+    ax.set_ylim(0, d0 * 1.1)
+    ax.set_xlim(0, (Q_pc * 1.2)/1000)
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    
+    # Exibe o gráfico final no Streamlit
+    st.pyplot(fig)
