@@ -8,7 +8,7 @@ Q2_MIN = 0
 Q2_MAX = 75 # Based on the original ipywidgets IntText max value
 
 st.set_page_config(layout="wide") # Use wide layout for better plot display
-st.title('Simulação de Cournot com Streamlit')
+st.title('Decisão de producação em Cournot')
 
 # Initialize session state for Q2 if not already present
 if 'q2_value' not in st.session_state:
@@ -42,7 +42,7 @@ with col3:
 q2 = st.session_state.q2_value
 
 # --- Gráfico 1: Decisão de Produção da Empresa 1 ---
-st.subheader(f'Figura 12.3: Decisão de Produção da Empresa 1 (Com Q2 esperado = {q2})')
+st.subheader(f' Decisão de Produção da Empresa 1 (Com Q2 esperado = {q2})')
 
 # Function to calculate demand and marginal revenue for Firm 1
 intercepto_p = max(0, P_DEMAND_INTERCEPT - q2)
