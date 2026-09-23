@@ -1,4 +1,4 @@
-
+%%writefile edgeworth_streamlit_app.py
 
 import streamlit as st
 import numpy as np
@@ -44,7 +44,7 @@ def simular_edgeworth_streamlit():
 
     ax.set_title(f'Função de Lucro da Empresa 1\nLucro Emp. 1 = {pi1:.2f} | Lucro Emp. 2 = {pi2:.2f}', fontsize=14)
     ax.set_xlabel('Preço da Empresa 1 ($p_1$)', fontsize=12)
-    ax.set_ylabel(r'Lucro ($\\\pi_1$)', fontsize=12)
+    ax.set_ylabel(r'Lucro ($\pi_1$)', fontsize=12) # Corrected backslash for LaTeX
     ax.grid(True, linestyle='--', alpha=0.6)
     ax.legend()
     plt.tight_layout()
