@@ -16,8 +16,8 @@ st.caption("Haywood, O. G. (1954). Military Decision and Game Theory. "
 # ---------------- barra lateral: decisões e parâmetros ----------------
 with st.sidebar:
     st.header("Decisões")
-    recon = st.radio("Kenney concentra o reconhecimento no:", bn.ESTRATEGIAS, horizontal=True)
-    rota = st.radio("O comboio japonês navega pela rota:", bn.ESTRATEGIAS, horizontal=True)
+    recon = st.radio("Aliados (aviões) concentram o reconhecimento no:", bn.ESTRATEGIAS, horizontal=True)
+    rota = st.radio("Comboio japonês (navios) navega pela rota:", bn.ESTRATEGIAS, horizontal=True)
     if st.button("Zarpar de Rabaul / nova simulação", type="primary", use_container_width=True):
         st.session_state.seed = np.random.randint(1_000_000_000)
     st.session_state.setdefault("seed", 42)
@@ -28,7 +28,7 @@ with st.sidebar:
         modo_lbl = st.radio("Modelo", ["Estocástico (clima + detecção)", "Matriz do artigo (determinístico)"])
         modo = "artigo" if modo_lbl.startswith("Matriz") else "estocastico"
         rasante = st.toggle("Bombardeio rasante (skip bombing)", value=True,
-                            help="A surpresa tática que Haywood cita: aviões modificados para ataque a baixa altitude.")
+                            help="A surpresa tática citada por Haywood: aviões aliados modificados para ataque a baixa altitude.")
         st.markdown("**Prob. de avistar por dia**")
         P["p_conc_chuva"] = st.slider("Concentrado + chuva", 0.0, 1.0, P["p_conc_chuva"], 0.05)
         P["p_conc_limpo"] = st.slider("Concentrado + limpo", 0.0, 1.0, P["p_conc_limpo"], 0.05)
@@ -65,10 +65,10 @@ with aba2:
         fig = bn.plot_matriz(A, recon, rota, tit); col.pyplot(fig); plt.close(fig)
         sol = bn.resolver_jogo(A)
         if sol["tipo"] == "sela":
-            col.success(f"Ponto de sela em (Kenney {bn.ESTRATEGIAS[sol['i']]}, Japão "
+            col.success(f"Ponto de sela em (Aliados {bn.ESTRATEGIAS[sol['i']]}, Japão "
                         f"{bn.ESTRATEGIAS[sol['j']]}), valor = {sol['valor']:.3f}")
         else:
-            col.warning(f"Sem ponto de sela. Estratégias mistas: Kenney Norte com prob. "
+            col.warning(f"Sem ponto de sela. Estratégias mistas: Aliados Norte com prob. "
                         f"{sol['p']:.3f}; Japão Norte com prob. {sol['q']:.3f}; valor = {sol['valor']:.3f}")
     st.info("A célula com borda azul é a combinação escolhida na barra lateral. "
             "Mova os sliders de detecção para ver o ponto de sela desaparecer.")
@@ -82,5 +82,7 @@ with aba3:
              f"tropas perdidas médias = {mc['tropas'].mean():,.0f}".replace(",", "."))
 
 with aba4:
-    st.markdown(open("TEORIA.md", encoding="utf-8").read() if __import__("os").path.exists("TEORIA.md")
-                else "Coloque TEORIA.md na mesma pasta para exibir as fórmulas.")
+    from pathlib import Path
+    arq = Path(__file__).parent / "TEORIA.md"
+    st.markdown(arq.read_text(encoding="utf-8") if arq.exists()
+                else "Coloque TEORIA.md na mesma pasta do app para exibir as fórmulas.")

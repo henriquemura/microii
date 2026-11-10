@@ -26,7 +26,7 @@ NOVA_GUINE = [(144.50, -4.00), (145.80, -4.90), (146.80, -5.70), (147.60, -6.00)
               (147.15, -7.10), (147.60, -7.60), (148.30, -8.30), (149.30, -9.20),
               (150.30, -10.3), (144.50, -10.3)]
 
-# Previsão do estado-maior de Kenney: chuva e baixa visibilidade ao norte da Nova Bretanha
+# Previsão do estado-maior aliado (Gen. Kenney): chuva e baixa visibilidade ao norte da Nova Bretanha
 ZONA_CHUVA = [(148.50, -3.00), (153.30, -3.00), (153.30, -4.05), (152.30, -4.05),
               (151.60, -4.60), (150.50, -5.00), (149.30, -5.25), (148.50, -5.30)]
 
@@ -39,7 +39,7 @@ ROTAS = {
 ESTRATEGIAS = ["Norte", "Sul"]
 N_DIAS = 3  # qualquer das rotas leva três dias
 
-# Matriz do artigo (p. 370): dias de bombardeio. Chave = (reconhecimento de Kenney, rota japonesa)
+# Matriz do artigo (p. 370): dias de bombardeio. Chave = (reconhecimento aliado, rota japonesa)
 MATRIZ_ARTIGO = {("Norte", "Norte"): 2, ("Norte", "Sul"): 2,
                  ("Sul", "Norte"): 1, ("Sul", "Sul"): 3}
 
@@ -127,7 +127,7 @@ def qs(P, rasante):
 
 
 def matriz_payoff(P, modo):
-    """Linhas = Kenney (maximizador), colunas = comboio japonês (minimizador)."""
+    """Linhas = Aliados (maximizador), colunas = comboio japonês (minimizador)."""
     A = np.zeros((2, 2))
     for i, r in enumerate(ESTRATEGIAS):
         for j, c in enumerate(ESTRATEGIAS):
@@ -196,11 +196,66 @@ def monte_carlo(recon, rota, P, rasante=True, n=10_000, rng=None):
     return {"B": B, "T": T, "D": D, "tropas": T * P["tropas"] / P["n_transp"] * P["frac_morte"]}
 
 
+
+# ---------------------------------------------------------------------
+# 5b. Ícones (marcadores desenhados como Path): navio e avião
+# ---------------------------------------------------------------------
+def _poligono(pts):
+    pts = list(pts) + [pts[0]]
+    return pts, [Path.MOVETO] + [Path.LINETO] * (len(pts) - 2) + [Path.CLOSEPOLY]
+
+
+def _composto(*polys):
+    v, c = [], []
+    for p in polys:
+        pv, pc = _poligono(p)
+        v += pv; c += pc
+    return Path(v, c)
+
+
+# navio visto de lado: casco + superestrutura + chaminé
+NAVIO = _composto([(-1.0, 0.0), (1.0, 0.0), (0.78, -0.32), (-0.85, -0.32)],
+                  [(-0.45, 0.0), (0.35, 0.0), (0.35, 0.28), (-0.45, 0.28)],
+                  [(-0.05, 0.28), (0.12, 0.28), (0.12, 0.55), (-0.05, 0.55)])
+
+# avião visto de cima, nariz para cima
+AVIAO = _composto([(0, 1.0), (0.09, 0.78), (0.09, 0.28), (0.95, 0.05), (0.95, -0.09),
+                   (0.09, -0.05), (0.07, -0.58), (0.34, -0.74), (0.34, -0.86), (0, -0.80),
+                   (-0.34, -0.86), (-0.34, -0.74), (-0.07, -0.58), (-0.09, -0.05),
+                   (-0.95, -0.09), (-0.95, 0.05), (-0.09, 0.28), (-0.09, 0.78)])
+
+COR_TRANSP, COR_DESTR, COR_AFUND = "#8d5524", "#37474f", "#bdbdbd"
+COR_RECON, COR_BOMB = "#1f3a93", "#b71c1c"
+
+
+def _painel_frota(ax, res, P):
+    """Quadro com os 16 navios do comboio: afundados em cinza com X vermelho."""
+    nT, nD = P["n_transp"], P["n_destr"]
+    kT = int(round(min(res["T"], nT))); kD = int(round(min(res["D"], nD)))
+    x0, y0, dx = 150.05, -7.72, 0.38
+    ax.add_patch(Rectangle((x0 - 0.3, y0 - 0.55), 3.35, 0.95, fc="white", ec="0.5",
+                           alpha=0.92, zorder=11))
+    aprox = "≈ " if res["modo"] == "artigo" else ""
+    ax.text(x0 - 0.2, y0 + 0.24, f"Comboio japonês ao chegar a Lae ({aprox}{nT - kT} transp. e "
+            f"{aprox}{nD - kD} destr. restantes)", fontsize=7.5, zorder=12, va="center")
+    for linha, (n, k, cor, nome) in enumerate([(nT, kT, COR_TRANSP, "transp."),
+                                                (nD, kD, COR_DESTR, "destr.")]):
+        y = y0 - 0.08 - linha * 0.32
+        ax.text(x0 - 0.2, y, nome, fontsize=7, va="center", zorder=12)
+        for i in range(n):
+            x = x0 + 0.42 + i * dx * 0.85
+            afund = i < k
+            ax.scatter(x, y, marker=NAVIO, s=520, color=COR_AFUND if afund else cor,
+                       edgecolor="none", zorder=12)
+            if afund:
+                ax.scatter(x, y + 0.02, marker="x", s=30, color="#d32f2f", lw=1.3, zorder=13)
+
+
 # ---------------------------------------------------------------------
 # 6. Gráficos
 # ---------------------------------------------------------------------
 def plot_mapa(res, P):
-    fig, ax = plt.subplots(figsize=(11, 6.8))
+    fig, ax = plt.subplots(figsize=(12, 7.4))
     ax.set_facecolor("#d6e6f2")
     ax.add_patch(Polygon(ZONA_CHUVA, closed=True, facecolor="#7a8a99", alpha=0.30,
                          hatch="..", edgecolor="#56636f", lw=0.8, zorder=1))
@@ -209,7 +264,7 @@ def plot_mapa(res, P):
                              edgecolor="#8a7a55", lw=1.2, zorder=2))
     for txt, xy, kw in [("MAR DE BISMARCK", (149.3, -3.6), dict(fontsize=13, color="#2c4a66", weight="bold")),
                         ("chuva e baixa visibilidade", (148.7, -3.95), dict(fontsize=9, color="#3b4a57", style="italic")),
-                        ("MAR DE SALOMÃO", (149.6, -7.6), dict(fontsize=11, color="#2c4a66", weight="bold")),
+                        ("MAR DE SALOMÃO", (148.3, -7.75), dict(fontsize=11, color="#2c4a66", weight="bold")),
                         ("tempo limpo", (150.3, -7.05), dict(fontsize=9, color="#3b4a57", style="italic")),
                         ("Nova Bretanha", (149.7, -5.85), dict(fontsize=10, color="#5a4a25")),
                         ("Nova Guiné", (145.3, -7.4), dict(fontsize=11, color="#5a4a25"))]:
@@ -223,13 +278,13 @@ def plot_mapa(res, P):
     for r in ESTRATEGIAS:
         s = np.linspace(0.06, 0.94, 8) if r == recon else np.array([0.35, 0.75])
         x, y = ponto_na_rota(r, s)
-        ax.scatter(x, y + (0.22 if r == "Norte" else -0.22), marker="^", s=55,
-                   color="#1f3a93", edgecolor="white", lw=0.6, zorder=6)
+        ax.scatter(x, y + (0.24 if r == "Norte" else -0.24), marker=AVIAO, s=420,
+                   color=COR_RECON, edgecolor="white", lw=0.4, zorder=6)
 
     # limites e clima de cada dia
     for k in range(1, N_DIAS):
         x, y = ponto_na_rota(rota, k / N_DIAS)
-        ax.scatter(x, y, s=40, color="black", zorder=7)
+        ax.scatter(x, y, marker=NAVIO, s=900, color=COR_DESTR, edgecolor="white", lw=0.5, zorder=8)
         ax.annotate(f"fim do dia {k}", (x, y), xytext=(6, -12 if rota == "Norte" else 8), textcoords="offset points", fontsize=8, zorder=7)
     for k, c in enumerate(res["clima"]):
         x, y = ponto_na_rota(rota, (k + 0.5) / N_DIAS)
@@ -244,12 +299,15 @@ def plot_mapa(res, P):
         pre, pos = trecho(rota, 0, s_av), trecho(rota, s_av, 1)
         ax.plot(*pre.T, color="#333333", lw=3.2, zorder=5)
         ax.plot(*pos.T, color="#c0392b", lw=4.5, solid_capstyle="round", zorder=5)
-        ax.scatter(*ponto_na_rota(rota, s_av), marker="*", s=430, color="gold",
-                   edgecolor="black", zorder=9)
+        xa, ya = ponto_na_rota(rota, s_av)
+        ax.scatter(xa, ya, s=1100, facecolor="none", edgecolor="gold", lw=2.5, zorder=9)
+        ax.scatter(xa, ya, marker=NAVIO, s=900, color=COR_DESTR, edgecolor="white", lw=0.5, zorder=9)
         for k in range(res["B"]):
             sk = s_av + (k + 0.5) * (1 - s_av) / res["B"]
             x, y = ponto_na_rota(rota, sk)
-            ax.scatter(x, y, marker="X", s=180, color="#ff6f00", edgecolor="black", zorder=9)
+            ax.scatter(x, y, marker="*", s=260, color="#ff6f00", edgecolor="#b71c1c", lw=0.8, zorder=9)
+            ax.scatter(x + 0.25, y + 0.25, marker=AVIAO, s=750, color=COR_BOMB,
+                       edgecolor="white", lw=0.4, zorder=10)
             fmt = "{:.1f}" if res["modo"] == "artigo" else "{:.0f}"
             ax.annotate(f"bombardeio {k+1}\n{fmt.format(res['t_dia'][k])} transp. | "
                         f"{fmt.format(res['d_dia'][k])} destr.",
@@ -259,9 +317,11 @@ def plot_mapa(res, P):
     else:
         r = ROTAS[rota]
         ax.plot(r[:, 0], r[:, 1], color="#333333", lw=3.2, zorder=5)
-        ax.text(148.6, -7.95, "Comboio NÃO avistado: chegou intacto a Lae", fontsize=11,
-                color="darkgreen", weight="bold", zorder=9)
+        ax.text(145.0, -4.6, "Comboio NÃO avistado:\nchegou intacto a Lae", fontsize=11,
+                color="darkgreen", weight="bold", zorder=9,
+                bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="darkgreen", alpha=0.9))
 
+    _painel_frota(ax, res, P)
     for nome, (x, y) in {"Rabaul": RABAUL, "Lae": LAE}.items():
         ax.scatter(x, y, s=90, color="black", marker="s", zorder=10)
         ax.annotate(nome, (x, y), xytext=(6, 6), textcoords="offset points", fontsize=11, weight="bold", zorder=10)
@@ -269,14 +329,15 @@ def plot_mapa(res, P):
     leg = [Line2D([], [], color="#333333", lw=3, label="trajeto não detectado"),
            Line2D([], [], color="#c0392b", lw=4, label="trajeto sob bombardeio"),
            Line2D([], [], ls="--", color="gray", label="rota alternativa"),
-           Line2D([], [], marker="*", ls="", ms=15, mfc="gold", mec="k", label="avistamento"),
-           Line2D([], [], marker="X", ls="", ms=11, mfc="#ff6f00", mec="k", label="dia de bombardeio"),
-           Line2D([], [], marker="^", ls="", ms=8, mfc="#1f3a93", mec="w", label="reconhecimento aliado")]
-    ax.legend(handles=leg, loc="lower left", fontsize=8, framealpha=0.9)
+           Line2D([], [], marker=NAVIO, ls="", ms=20, mfc=COR_DESTR, mec="w", label="comboio japonês (fim de cada dia)"),
+           Line2D([], [], marker="o", ls="", ms=14, mfc="none", mec="gold", mew=2.5, label="comboio avistado"),
+           Line2D([], [], marker=AVIAO, ls="", ms=16, mfc=COR_RECON, mec="w", label="reconhecimento aliado"),
+           Line2D([], [], marker=AVIAO, ls="", ms=16, mfc=COR_BOMB, mec="w", label="bombardeio aliado (1 por dia)")]
+    ax.legend(handles=leg, loc="lower left", fontsize=7.5, framealpha=0.92)
     ax.set_xlim(144.8, 153.4); ax.set_ylim(-8.3, -3.1); ax.set_aspect("equal")
     ax.set_xlabel("longitude (°E)"); ax.set_ylabel("latitude (°)")
     tec = "rasante (skip bombing)" if res["rasante"] else "convencional"
-    ax.set_title(f"Kenney: reconhecimento no {recon}  ×  Comboio: rota {rota}  →  "
+    ax.set_title(f"Aliados: reconhecimento no {recon}  ×  Comboio japonês: rota {rota}  →  "
                  f"{res['B']} dia(s) de bombardeio  [{tec}]", fontsize=11)
     fig.tight_layout()
     return fig
@@ -293,8 +354,8 @@ def plot_matriz(A, recon, rota, titulo):
         ax.text(1.6, i, f"mín linha = {A[i].min():.2f}", va="center", fontsize=9)
     for j in range(2):
         ax.text(j, 1.68, f"máx coluna = {A[:, j].max():.2f}", ha="center", fontsize=9)
-    ax.set_xticks([0, 1], ["Comboio: Norte", "Comboio: Sul"])
-    ax.set_yticks([0, 1], ["Recon: Norte", "Recon: Sul"])
+    ax.set_xticks([0, 1], ["Japão: Norte", "Japão: Sul"])
+    ax.set_yticks([0, 1], ["Aliados: Norte", "Aliados: Sul"])
     ax.xaxis.tick_top()
     ax.add_patch(Rectangle((ESTRATEGIAS.index(rota) - 0.5, ESTRATEGIAS.index(recon) - 0.5),
                            1, 1, fill=False, ec="royalblue", lw=4))
@@ -304,7 +365,7 @@ def plot_matriz(A, recon, rota, titulo):
                f"({ESTRATEGIAS[sol['i']]}, {ESTRATEGIAS[sol['j']]})")
     else:
         sub = (f"Sem sela (maximin {sol['maximin']:.2f} < minimax {sol['minimax']:.2f}). Mista: "
-               f"P(Kenney N)={sol['p']:.2f}, P(Japão N)={sol['q']:.2f}, v={sol['valor']:.2f}")
+               f"P(Aliados N)={sol['p']:.2f}, P(Japão N)={sol['q']:.2f}, v={sol['valor']:.2f}")
     ax.set_title(f"{titulo}\n{sub}", fontsize=9.5, pad=28)
     ax.set_xlim(-0.5, 2.4); ax.set_ylim(1.95, -0.5)
     for s in ax.spines.values():

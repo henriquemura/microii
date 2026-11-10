@@ -1,6 +1,6 @@
 ### 1. O jogo de Haywood
 
-Jogadores: Kenney (linhas, maximiza dias de bombardeio) e o comandante japonês (colunas, minimiza).
+Jogadores: Aliados — força aérea comandada pelo Gen. George Kenney — (linhas, maximizam dias de bombardeio) e o comandante japonês (colunas, minimiza).
 Estratégias: Norte (N) e Sul (S) para ambos.
 
 ```latex
@@ -8,7 +8,7 @@ A = \begin{pmatrix} a_{NN} & a_{NS} \\ a_{SN} & a_{SS} \end{pmatrix}
   = \begin{pmatrix} 2 & 2 \\ 1 & 3 \end{pmatrix}
 ```
 
-Maximin (Kenney) e minimax (Japão):
+Maximin (Aliados) e minimax (Japão):
 
 ```latex
 \underline{v} = \max_i \min_j a_{ij} = \max\{2,\,1\} = 2
@@ -16,7 +16,7 @@ Maximin (Kenney) e minimax (Japão):
 \overline{v} = \min_j \max_i a_{ij} = \min\{2,\,3\} = 2
 ```
 
-Como `\underline{v} = \overline{v} = 2`, há ponto de sela em (N, N): estratégias puras "casadas" (*matched strategies*). A mesma solução sai por dominância iterada: para o Japão (minimizador) a coluna N domina fracamente a coluna S (2 ≤ 2 e 1 ≤ 3); eliminada S, Kenney prefere N (2 > 1).
+Como `\underline{v} = \overline{v} = 2`, há ponto de sela em (N, N): estratégias puras "casadas" (*matched strategies*). A mesma solução sai por dominância iterada: para o Japão (minimizador) a coluna N domina fracamente a coluna S (2 ≤ 2 e 1 ≤ 3); eliminada S, os Aliados preferem N (2 > 1).
 
 ### 2. Modelo estocástico de detecção
 
@@ -64,7 +64,7 @@ q^{*} = \frac{d-b}{a-b-c+d}, \qquad
 v = \frac{ad-bc}{a-b-c+d}
 ```
 
-`p*` = probabilidade de Kenney jogar N; `q*` = probabilidade de o Japão jogar N. Exemplo: leve "Concentrado + chuva" para 0,90. Então E[B|N,N] ≈ 2,9 > E[B|N,S] ≈ 2,2: a chuva deixa de proteger o comboio, maximin ≈ 2,2 < minimax ≈ 2,9 e o equilíbrio passa a ser misto.
+`p*` = probabilidade de os Aliados jogarem N; `q*` = probabilidade de o Japão jogar N. Exemplo: leve "Concentrado + chuva" para 0,90. Então E[B|N,N] ≈ 2,9 > E[B|N,S] ≈ 2,2: a chuva deixa de proteger o comboio, maximin ≈ 2,2 < minimax ≈ 2,9 e o equilíbrio passa a ser misto.
 
 ### 5. Calibração (estilizada)
 
