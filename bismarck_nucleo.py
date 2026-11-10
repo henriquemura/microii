@@ -49,8 +49,9 @@ def parametros_padrao():
     reproduzam aproximadamente a matriz 2-2 / 1-3 de Haywood."""
     return {
         # prob. de avistar o comboio num dia, dado cobertura x clima
-        "p_conc_chuva": 0.40, "p_conc_limpo": 0.95,
-        "p_esp_chuva": 0.05, "p_esp_limpo": 0.50,
+        # dia 1 ao norte: chuva forte (frente sobre Rabaul); dia 2: chuva
+        "p_conc_chuvaforte": 0.15, "p_conc_chuva": 0.80, "p_conc_limpo": 0.95,
+        "p_esp_chuvaforte": 0.02, "p_esp_chuva": 0.08, "p_esp_limpo": 0.50,
         "p_lae": 0.90,             # dia 3 em tempo limpo, perto das bases aliadas
         # prob. de afundar um navio por dia de bombardeio
         "q_transp_rasante": 0.60, "q_destr_rasante": 0.30,   # skip bombing (surpresa tática)
@@ -84,11 +85,12 @@ _PATH_CHUVA = Path(ZONA_CHUVA)
 
 
 def clima_por_dia(rota):
-    """Dia com mais da metade do trecho na zona de chuva = 'chuva'."""
+    """Dia com mais da metade do trecho na zona de chuva = 'chuva'; no dia 1
+    (saída de Rabaul, sob a frente de mau tempo) = 'chuva forte'."""
     out = []
     for d in range(N_DIAS):
         frac = _PATH_CHUVA.contains_points(trecho(rota, d / N_DIAS, (d + 1) / N_DIAS, 200)).mean()
-        out.append("chuva" if frac > 0.5 else "limpo")
+        out.append(("chuva forte" if d == 0 else "chuva") if frac > 0.5 else "limpo")
     return out
 
 
@@ -100,7 +102,7 @@ def probs_deteccao(recon, rota, P):
     cob = "conc" if recon == rota else "esp"
     ps = []
     for d, c in enumerate(clima, start=1):
-        p = P[f"p_{cob}_{c}"]
+        p = P[f"p_{cob}_{c.replace(' ', '')}"]
         if d == N_DIAS and c == "limpo":
             p = max(p, P["p_lae"])
         ps.append(p)
@@ -337,8 +339,13 @@ def plot_mapa(res, P):
     ax.set_xlim(144.8, 153.4); ax.set_ylim(-8.3, -3.1); ax.set_aspect("equal")
     ax.set_xlabel("longitude (°E)"); ax.set_ylabel("latitude (°)")
     tec = "rasante (skip bombing)" if res["rasante"] else "convencional"
-    ax.set_title(f"Aliados: reconhecimento no {recon}  ×  Comboio japonês: rota {rota}  →  "
-                 f"{res['B']} dia(s) de bombardeio  [{tec}]", fontsize=11)
+    if res["modo"] == "artigo":
+        sub = f"{res['B']} dia(s) de bombardeio (matriz do artigo)"
+    else:
+        sub = (f"nesta travessia: {res['B']} dia(s) de bombardeio  "
+               f"(média esperada {dias_esperados(res['ps']):.2f})")
+    ax.set_title(f"Aliados: reconhecimento no {recon}  ×  Comboio japonês: rota {rota}\n"
+                 f"{sub}  [{tec}]", fontsize=11)
     fig.tight_layout()
     return fig
 

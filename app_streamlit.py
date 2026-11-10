@@ -24,15 +24,18 @@ with st.sidebar:
 
     P = bn.parametros_padrao()
     with st.expander("Avançado", expanded=False):
-        st.caption("Padrão: modelo estocástico com bombardeio rasante.")
-        modo_lbl = st.radio("Modelo", ["Estocástico (clima + detecção)", "Matriz do artigo (determinístico)"])
+        st.caption("Padrão: matriz do artigo com bombardeio rasante. O modelo estocástico sorteia "
+                   "o dia do avistamento conforme o clima, e cada travessia dá um resultado diferente.")
+        modo_lbl = st.radio("Modelo", ["Matriz do artigo (determinístico)", "Estocástico (clima + detecção)"])
         modo = "artigo" if modo_lbl.startswith("Matriz") else "estocastico"
         rasante = st.toggle("Bombardeio rasante (skip bombing)", value=True,
                             help="A surpresa tática citada por Haywood: aviões aliados modificados para ataque a baixa altitude.")
         st.markdown("**Prob. de avistar por dia**")
-        P["p_conc_chuva"] = st.slider("Concentrado + chuva", 0.0, 1.0, P["p_conc_chuva"], 0.05)
+        P["p_conc_chuvaforte"] = st.slider("Concentrado + chuva forte (dia 1)", 0.0, 1.0, P["p_conc_chuvaforte"], 0.05)
+        P["p_conc_chuva"] = st.slider("Concentrado + chuva (dia 2)", 0.0, 1.0, P["p_conc_chuva"], 0.05)
         P["p_conc_limpo"] = st.slider("Concentrado + limpo", 0.0, 1.0, P["p_conc_limpo"], 0.05)
-        P["p_esp_chuva"] = st.slider("Esparso + chuva", 0.0, 1.0, P["p_esp_chuva"], 0.05)
+        P["p_esp_chuvaforte"] = st.slider("Esparso + chuva forte (dia 1)", 0.0, 1.0, P["p_esp_chuvaforte"], 0.01)
+        P["p_esp_chuva"] = st.slider("Esparso + chuva (dia 2)", 0.0, 1.0, P["p_esp_chuva"], 0.01)
         P["p_esp_limpo"] = st.slider("Esparso + limpo", 0.0, 1.0, P["p_esp_limpo"], 0.05)
         P["p_lae"] = st.slider("Dia 3 perto de Lae (limpo)", 0.0, 1.0, P["p_lae"], 0.05)
         st.markdown("**Prob. de afundar um navio por dia de bombardeio**")

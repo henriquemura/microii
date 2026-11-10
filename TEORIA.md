@@ -20,7 +20,7 @@ Como `\underline{v} = \overline{v} = 2`, há ponto de sela em (N, N): estratégi
 
 ### 2. Modelo estocástico de detecção
 
-O comboio leva 3 dias. No dia d, a probabilidade de ser avistado depende da cobertura (concentrada/esparsa) e do clima no trecho (chuva/limpo): `p_d`. Se o primeiro avistamento ocorre no dia d, há `B = 4 - d` dias de bombardeio (discretização implícita no artigo).
+O comboio leva 3 dias. No dia d, a probabilidade de ser avistado depende da cobertura (concentrada/esparsa) e do clima no trecho: `p_d`. Na rota Norte, o dia 1 (saída de Rabaul, sob a frente de mau tempo) é de chuva forte, o dia 2 de chuva e o dia 3, perto de Lae, limpo. Na rota Sul, os três dias são limpos. Se o primeiro avistamento ocorre no dia d, há `B = 4 - d` dias de bombardeio (discretização implícita no artigo).
 
 ```latex
 \Pr(B = 4-d) = p_d \prod_{k<d} (1-p_k), \quad d = 1,2,3
@@ -35,10 +35,16 @@ E[B] = 3p_1 + 2(1-p_1)p_2 + (1-p_1)(1-p_2)p_3
 A matriz do modelo é `a_{ij} = E[B \mid i, j]`. Com os parâmetros padrão:
 
 ```latex
-E[B] \approx \begin{pmatrix} 2{,}02 & 2{,}23 \\ 1{,}06 & 2{,}95 \end{pmatrix}
+E[B] \approx \begin{pmatrix} 1{,}97 & 2{,}23 \\ 1{,}03 & 2{,}95 \end{pmatrix}
 ```
 
-o que reproduz o ponto de sela em (N, N) com valor ≈ 2.
+o que reproduz o ponto de sela em (N, N) com valor ≈ 2. Além da média, a distribuição também segue o artigo: em (N, N), com p = (0,15; 0,80; 0,95),
+
+```latex
+\Pr(B=3)=0{,}15 \quad \Pr(B=2)=0{,}68 \quad \Pr(B=1)=0{,}16 \quad \Pr(B=0)=0{,}01
+```
+
+ou seja, o caso histórico (avistado ao fim do dia 1, dois dias de bombardeio) é o resultado mais provável.
 
 ### 3. Danos
 
@@ -64,7 +70,7 @@ q^{*} = \frac{d-b}{a-b-c+d}, \qquad
 v = \frac{ad-bc}{a-b-c+d}
 ```
 
-`p*` = probabilidade de os Aliados jogarem N; `q*` = probabilidade de o Japão jogar N. Exemplo: leve "Concentrado + chuva" para 0,90. Então E[B|N,N] ≈ 2,9 > E[B|N,S] ≈ 2,2: a chuva deixa de proteger o comboio, maximin ≈ 2,2 < minimax ≈ 2,9 e o equilíbrio passa a ser misto.
+`p*` = probabilidade de os Aliados jogarem N; `q*` = probabilidade de o Japão jogar N. Exemplo: no modo estocástico, leve "Concentrado + chuva forte (dia 1)" para 0,60. Então E[B|N,N] ≈ 2,52 > E[B|N,S] ≈ 2,23: a chuva forte deixa de proteger o comboio, maximin ≈ 2,23 < minimax ≈ 2,52 e o equilíbrio passa a ser misto, com p* ≈ 0,87, q* ≈ 0,33 e v ≈ 2,32.
 
 ### 5. Calibração (estilizada)
 
