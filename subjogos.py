@@ -416,8 +416,15 @@ def sigla_html(g: Game, prof: dict, active: set[str]) -> str:
 
 
 def plan_text(g: Game, plan: dict) -> str:
-    return ", ".join(f"{act_label(g, n, a)} em SJ{g.nodes[n]['sj']}"
+    """Plano condicional: uma instrução por nó ("se chegar aqui, faço isso")."""
+    return "; ".join(f"{act_label(g, n, a)} {g.nodes[n]['desc']} (SJ{g.nodes[n]['sj']})"
                      for n, a in plan.items())
+
+
+def path_text(g: Game, start: str, prof: dict) -> str:
+    """Caminho efetivamente percorrido a partir de start."""
+    return " → ".join(act_label(g, n, prof[n]) for n in play(g, start, prof)
+                      if not is_term(n))
 
 
 def strategic_form_html(g: Game, pay: dict, prof: dict) -> str:
@@ -575,18 +582,27 @@ with tab1:
             st.markdown(f"**3. Jogar a partir do início do recorte:** {jog} → "
                         f"**{fpay(pay[T['t']])}**")
             st.markdown("**4. Testar desvios** (muda só as letras de um jogador; "
-                        "as do outro ficam fixas):")
+                        "as do outro ficam fixas). Cada plano é uma lista de instruções "
+                        "condicionais, uma por nó; o caminho jogado mostra quais delas "
+                        "foram de fato usadas.")
             for i, x in enumerate(T["res"]):
                 if x is None:
                     continue
                 st.markdown(f"*{g.players[i]}* recebe hoje **{fmt(x['cur'])}**. "
                             "Alternativas:")
-                alts = x["alts"] if len(x["alts"]) <= 4 else [x["best"]]
-                st.markdown("\n".join(
-                    f"- {plan_text(g, a['plan'])} → {fpay(pay[a['t']])} → recebe "
-                    f"{fmt(a['v'])}" for a in alts))
-                if len(x["alts"]) > 4:
-                    st.caption(f"{len(x['alts'])} combinações; mostrada só a melhor.")
+                # todas as combinações das letras deste jogador no recorte;
+                # a combinação atual (a do perfil) vem marcada
+                linhas = []
+                for a in x["alts"]:
+                    atual = all(prof[n] == v for n, v in a["plan"].items())
+                    cam = path_text(g, focus, {**prof, **a["plan"]})
+                    linhas.append(
+                        f"- Plano: {plan_text(g, a['plan'])}  \n"
+                        f"  Caminho jogado: {cam} → {fpay(pay[a['t']])} → recebe "
+                        f"**{fmt(a['v'])}**" + ("  ← **atual**" if atual else ""))
+                st.markdown("\n".join(linhas))
+                st.caption(f"{len(x['alts'])} combinações = 2^{len(x['alts']).bit_length() - 1} "
+                           "(duas ações em cada nó deste jogador dentro do recorte).")
                 if x["gain"] > 0:
                     st.markdown(f'<span class="no">Ganha +{fmt(x["gain"])} desviando → falha.</span>',
                                 unsafe_allow_html=True)
